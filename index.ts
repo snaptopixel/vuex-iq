@@ -1,5 +1,5 @@
-import Vue from 'vue';
-import Vuex, { MutationPayload } from 'vuex';
+import { TypedDispatch } from './index';
+import { MutationPayload } from 'vuex';
 import { WatchOptions } from 'vue/types/options';
 
 export interface Getters { }

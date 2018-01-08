@@ -9,9 +9,7 @@ import {
   TypedStore
   } from './index';
 import { copyOwnProperties, ModuleScope } from './utils';
-import { createDecorator } from 'vue-class-component';
 import { WatchOptions } from 'vue/types/options';
-import { DecoratedClass } from 'vue-class-component/lib/declarations';
 
 Vue.use(Vuex);
 
@@ -29,7 +27,6 @@ Vue.use({
 // in order to define things on the store/module instance
 let queuedDecorators: ((store: any, scope: ModuleScope) => void)[] = [];
 let queuedWatchers: {getter: (state:State, getters:Getters) => any, callback: (value: any, oldValue: any) => void, options: WatchOptions}[] = [];
-let queuedSubscriptions: Function[] = [];
 
 // We need a reference to the root store for dispatching and commiting
 // so we use a simple plugin to get it
@@ -39,19 +36,22 @@ function initPlugin(store: TypedStore) {
   queuedWatchers.forEach(({getter, options, callback}) => store.watch(getter, callback, options));
 }
 
-export function store(config: {
+interface IModuleConfig {
   // `namespaced` is intentionally NOT supported
   // IMHO the decorators do it better, you just need to make sure your
   // getters, mutations and actions have unique names
   modules?: Object;
-} = {}) {
+}
+
+export function module(target: any): any;
+export function module(config:IModuleConfig = {}): any {
   // queuedDecorators has already been populated at this point by the child decorators,
   // so we cache it and reinitialize for the next @module
   const decorators = queuedDecorators;
   queuedDecorators = [];
-  return (target: any) => {
+  function factory(target: any) {
     const scope = new ModuleScope();
-    // This is the actual StoreOptions object that the class is replaced with in output
+    // This is the actual StoreOptions object that replaces the class
     const store: any = {
       state: {},
       modules: config.modules,
@@ -67,14 +67,20 @@ export function store(config: {
     decorators.forEach(callback => callback(store, scope));
     return store;
   }
+  if (typeof config === 'function') {
+    return factory(config);
+  } else {
+    return factory;
+  }
 }
 
 export function getter<T extends keyof Getters>(name: T) {
-  return (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<Getters[T]>) => {
+  type GetterFunc = () => Getters[T];
+  return (target: any, propertyKey: string, descriptor: TypedPropertyDescriptor<GetterFunc>) => {
     queuedDecorators.push((store: any, scope: ModuleScope) => {
       Object.defineProperty(scope.getters, propertyKey, descriptor);
       store.getters[name] = (state: any, getters: any, rootState: any, rootGetters: any) => {
-        return descriptor.get && descriptor.get.apply(scope.getterScope(state, rootState, rootGetters));
+        return descriptor.value.apply(scope.getterScope(state, rootState, rootGetters));
       }
     });
   }
@@ -118,12 +124,12 @@ export function mapGetter(name: keyof Getters) {
 
 export function mapAction<T extends keyof Actions>(name: T) {
   return (target: any, propertyKey: string) => {
-    target[propertyKey] = payload => rootStore.dispatch(name, payload);
+    target[propertyKey] = (payload: Actions[T]) => rootStore.dispatch(name, payload);
   }
 }
 
-export function mapMutation(name: keyof Mutations) {
+export function mapMutation<T extends keyof Mutations>(name: T) {
   return (target: any, propertyKey: string) => {
-    target[propertyKey] = payload => rootStore.commit(name, payload);
+    target[propertyKey] = (payload: Mutations[T]) => rootStore.commit(name, payload);
   }
 }

@@ -8,13 +8,13 @@
     "preversion": "yarn test",
     "postversion": "git push --tags && yarn publish",
     "test": "mocha-webpack --require \"test/bootstrap.js\" \"test/**/*.spec.ts\"",
-    "start": "yarn run test -- --watch"
+    "start": "yarn run test --watch"
   },
   "repository": "snaptopixel/vuex-iq",
   "author": "Casey Corcoran <github@snaptopixel.com> (http://snaptopixel.com)",
   "license": "ISC",
   "devDependencies": {
-    "@types/chai": "4.0.5",
+    "@types/chai": "4.0.6",
     "@types/chance": "0.7.35",
     "@types/mocha": "2.2.44",
     "@types/sinon": "4.0.0",
@@ -25,16 +25,14 @@
     "mocha-webpack": "1.0.1",
     "sinon": "4.1.2",
     "sinon-chai": "2.14.0",
-    "ts-loader": "3.1.1",
-    "webpack": "3.8.1"
+    "ts-loader": "3.2.0",
+    "typescript": "2.6.2",
+    "vue": "2.5.9",
+    "vue-class-component": "6.1.0",
+    "vuex": "3.0.1",
+    "webpack": "3.9.1"
   },
   "engines": {
     "node": ">=6.0.0"
-  },
-  "dependencies": {
-    "typescript": "2.6.1",
-    "vue": "2.5.8",
-    "vue-class-component": "6.1.0",
-    "vuex": "3.0.1"
   }
 }

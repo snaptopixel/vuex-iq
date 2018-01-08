@@ -1,8 +1,8 @@
-// This is the root store for our tests
-import Vuex from 'vuex';
-import { action, getter, store, mutation } from '../decorators';
-import { TypedStore } from '../';
-import User, { IUser } from './user';
+import { TypedStore } from './../index';
+import { StoreOptions } from 'vuex';
+import { getter, module } from '../decorators';
+import user, { IUser } from './user';
+import { State } from '../index';
 
 declare module '../' {
   // Make sure we get typing on 'state' this should only be done in the root store
@@ -10,18 +10,20 @@ declare module '../' {
     user: IUser;
   }
   interface Getters {
-    'app/hasUser': Boolean;
+    'app.hasUser': Boolean;
   }
 }
 
-@store({
-  modules: { user: User }
+@module({
+  modules: { user }
 })
-export default class App extends TypedStore {
-  user: User = null;
+class App extends TypedStore {
+  user: IUser = null;
 
-  @getter('app/hasUser')
-  private get hasUser() {
+  @getter('app.hasUser')
+  hasUser() {
     return !!this.user.firstName;
   }
 }
+
+export default App as StoreOptions<State>;

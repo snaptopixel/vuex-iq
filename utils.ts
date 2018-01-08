@@ -1,4 +1,4 @@
-import Vuex, {ActionContext} from 'vuex';
+import {ActionContext} from 'vuex';
 
 // Copy properties between objects with a few additional features
 export function copyOwnProperties(source: any, target: any, readonly = false) {

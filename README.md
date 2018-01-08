@@ -1,105 +1,52 @@
-# Vuex IQ 💡 [![Build Status](https://img.shields.io/circleci/project/snaptopixel/vuex-iq/master.svg)](https://circleci.com/gh/snaptopixel/vuex-iq) [![npm package](https://img.shields.io/npm/v/vuex-iq.svg)](https://www.npmjs.com/package/vuex-iq)
+# vuex-iq
 
-Make your TypeScript-based Vuex applications smarter with full type-safety and code completion using a combination of decorators and patterns.
+> Smarter Vuex + TypeScript applications with full type-safety and code completion via decorators and idiomatic TypeScript patterns.
 
-  - [Decorators Primer](#primer)
-  - [Basic example](#basic-example)
-      - [Without Decorators:](#without-decorators)
-      - [With Decorators:](#with-decorators)
-  - [Typing your stores and modules](#typing-your-stores-and-modules)
-    - [Declaring actions, getters and mutations](#declaring-actions-getters-and-mutations)
-  - [Example usage and code structure](#example-usage-and-code-structure)
+ [![Build Status](https://img.shields.io/circleci/project/snaptopixel/vuex-iq/master.svg)](https://circleci.com/gh/snaptopixel/vuex-iq) [![npm package](https://img.shields.io/npm/v/vuex-iq.svg)](https://www.npmjs.com/package/vuex-iq)
 
-## Decorators Primer
+### Usage
 
-While working with decorators in TypeScript, it helps to have a basic understanding of what they are (and aren't) doing. With these decorators we'll write classes which are  _transformed_ into Vuex module/store definitions at runtime. It's important to note that we will never use `new` or `extends` with these decorated classes.
-
-You may ask yourself:
-> _"If a class is not really a class, why use `class` in the first place?"_
-
-In this case, utilizing `class` allows for a straightforward and ergonomic syntax while also providing usable typings down the line. When we combine that benefit with the added convenience of a normalized scope for our actions, mutations and getters (provided by the decorators) we end up with less boilerplate, strict-typing and clearer code across the board.
-
-
-
-## Basic example
-The following snippet shows a standard Vuex declaration followed by an example using decorators.
-
-#### Without Decorators:
-```ts
-const MyStore = new Vuex.Store({
-  state: {
-    prop: 'value'
-  },
-  getters: {
-    ['myStore/myGetter'](state, getters) {
-      return state.prop + ' gotten';
-    },
-    ['myStore/myOtherGetter'](state, getters) {
-      return getters.myGetter + ' again';
-    }
-  },
-  actions: {
-    ['myStore/myAction']({commit, getters}, payload) {
-      commit('myStore/myMutation', getters.['myStore/myOtherGetter'] + payload.prop);
-    }
-  },
-  mutations: {
-    ['myStore/myMutation'](state, payload) {
-      state.prop = payload;
-    }
-  }
-})
-```
-#### With Decorators:
-```ts
-@module()
-class MyStore {
-  prop = 'value';
-  @getter('myStore/myGetter')
-  get myGetter(): string {
-    return this.prop + ' gotten';
-  }
-  @getter('myStore/myOtherGetter')
-  get myOtherGetter(): string {
-    return this.myGetter + ' again';
-  }
-  @action('myStore/myAction')
-  private myAction(payload: string): Promise<void> {
-    this.myMutation(this.myOtherGetter + payload.prop);
-  }
-  @mutation('myStore/myMutation')
-  private myMutation(payload: string) {
-    this.prop = payload;
-  }
-}
+**Required**: Add the following snippet to the `compilerOptions` object inside tsconfig.json:
+```json
+"experimentalDecorators": true
 ```
 
-## Typing your stores and modules
-It's important to note that by themselves, the included decorators do not provide full type-safety. Instead they allow us to write our stores and modules in a way that allows us to **achieve** type-safety via idomatic TypeScript patterns.
-
-### Declaring actions, getters and mutations
-Leveraging TypeScript's “declaration merging” we can easily specify our store's api to achieve type-safety and code-completion throughout our application. Let's start with a few declarations:
-
+#### Declaring state, actions, getters and mutations
+By leveraging TypeScript's built-in "declaration merging" we can provide typings that will propagate throughout our entire application while remaining loosely-coupled and avoiding boilerplate (importing constants, etc). The following example shows how to declare actions and mutations with strictly typed payloads, as well as strictly typed getters:
 ```ts
-// myStore.ts
-
-import {Store} from 'vuex-iq/constants';
-
-declare module 'vuex-iq/constants' {
+declare module 'vuex-iq' {
+  interface State {
+    'someProp': number;
+  }
   interface Actions {
-    // Action name   // Payload?
-    'myStore/myAction': string;
-  }
-  interface Mutations {
-    'myStore/myMutation': string;
+    'someAction': number; // payload type
   }
   interface Getters {
-    'myStore/myGetter': string,
-    'myStore/myOtherGetter': string
+    'someGetter': boolean; // value type
+  }
+  interface Mutations {
+    'someMutation': string // payload type
   }
 }
 ```
+Once everything has been declared we can start writing the actual module as a class using the decorators:  
 
-## Example usage and code structure
+```ts
+import { action, getter, module, mutation } from 'vuex-iq/decorators';
 
-For futher answers and information, please check out the companion [vuex-ts-example](https://github.com/snaptopixel/vuex-ts-example) project. You'll be able to see the decorators in action as well as some guidance on how you can structure your code for the best results.
+/* Declarations from the previous example here */
+
+@module
+export default class someStore extends TypedStore {
+  someProp: number = null;
+
+  @getter('someGetter')
+  someGetter() {
+    return isNaN(this.someProp);
+  }
+  @mutation('someMutation')
+  someMutation(payload: string) {
+
+  }
+}
+```
